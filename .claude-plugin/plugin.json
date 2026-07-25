@@ -1,8 +1,8 @@
 {
   "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
-  "name": "pegasus-skills",
+  "name": "herdr-orchestration",
   "version": "0.1.0",
-  "description": "Agent skills by transparent-pegasus, shared across Claude Code, Codex and Cursor. Currently multi-pane agent orchestration and delegation for herdr; more skills to follow.",
+  "description": "Multi-pane agent orchestration for herdr. Routes user tasks through the pane that received them, delegates to idle sibling agent panes over a composer-safe transport, and substitutes a fallback agent when one is exhausted.",
   "author": {
     "name": "transparent-pegasus",
     "url": "https://github.com/transparent-pegasus"
@@ -11,11 +11,10 @@
   "repository": "https://github.com/transparent-pegasus/pegasus-skills",
   "license": "MIT",
   "keywords": [
-    "skills",
-    "agent-skills",
     "herdr",
     "orchestration",
     "delegation",
-    "multi-agent"
+    "multi-agent",
+    "tui"
   ]
 }

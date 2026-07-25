@@ -1,7 +1,7 @@
 {
-  "name": "pegasus-skills",
+  "name": "herdr-orchestration",
   "version": "0.1.0",
-  "description": "Agent skills by transparent-pegasus, shared across Claude Code, Codex and Cursor. Currently multi-pane agent orchestration and delegation for herdr; more skills to follow.",
+  "description": "Multi-pane agent orchestration for herdr. Routes user tasks through the pane that received them, delegates to idle sibling agent panes over a composer-safe transport, and substitutes a fallback agent when one is exhausted.",
   "author": {
     "name": "transparent-pegasus",
     "url": "https://github.com/transparent-pegasus"
@@ -10,18 +10,17 @@
   "repository": "https://github.com/transparent-pegasus/pegasus-skills",
   "license": "MIT",
   "keywords": [
-    "skills",
-    "agent-skills",
     "herdr",
     "orchestration",
     "delegation",
-    "multi-agent"
+    "multi-agent",
+    "tui"
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Pegasus Skills",
-    "shortDescription": "Agent skills: herdr orchestration and delegation",
-    "longDescription": "A collection of agent skills. The current set covers herdr: route every task that arrives from the user through the pane that received it, delegate to idle sibling agent panes, and fall back to a substitute agent when one is exhausted.",
+    "displayName": "Herdr Orchestration",
+    "shortDescription": "Herdr multi-pane orchestration and delegation",
+    "longDescription": "Route every task that arrives from the user through the pane that received it, delegate complex coding and routine work to idle sibling agent panes in herdr, and fall back to a substitute agent when one is exhausted.",
     "developerName": "transparent-pegasus",
     "category": "Productivity",
     "capabilities": [

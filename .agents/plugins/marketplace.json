@@ -1,11 +1,11 @@
 {
-  "name": "pegasus-skills",
+  "name": "herdr-orchestration",
   "interface": {
-    "displayName": "Pegasus Skills"
+    "displayName": "Herdr Orchestration"
   },
   "plugins": [
     {
-      "name": "pegasus-skills",
+      "name": "herdr-orchestration",
       "source": {
         "source": "local",
         "path": "./"

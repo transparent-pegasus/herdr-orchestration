@@ -1,16 +1,12 @@
-# pegasus-skills
+# herdr-orchestration
 
-Agent skills, packaged once and installable in Claude Code, Codex and Cursor. Skills are addressed as `pegasus-skills:<name>`.
+Multi-pane agent orchestration for [herdr](https://herdr.dev). Every task that arrives directly from the user is routed through the pane that received it; that pane plans and designs, sends plans for independent double review, and delegates the rest to idle sibling agent panes over a composer-safe transport. Role assignments and exhaustion fallbacks live in one swappable `roles.yaml`.
 
-The current set covers [herdr](https://herdr.dev) multi-pane orchestration. More, unrelated skills will land here — the namespace is deliberately general, so nothing outside `skills/<name>/` assumes a topic.
+Requires `HERDR_ENV=1`. Outside herdr the skills do nothing.
 
 ## Skills
 
-### herdr
-
-Both require `HERDR_ENV=1` and do nothing outside herdr.
-
-- [`orchestration`](skills/orchestration/) — routes every task that arrives directly from the user through the pane that received it: that pane plans and designs, sends plans for independent double review, delegates complex coding and routine work to sibling panes, and substitutes a fallback agent when one is exhausted. Assignments live in [`roles.yaml`](skills/orchestration/roles.yaml).
+- [`orchestration`](skills/orchestration/) — orchestrator rules, task routing, the complex-coding boundary, plan double review, the delegation contract, and fallback resolution.
 - [`using-herdr-sibling-panes`](skills/using-herdr-sibling-panes/) — the delegation transport: composer-safe submission, the completion-marker task contract, failure handling, and a probe that verifies a new agent CLI can be driven at all.
 
 ## Install
@@ -19,14 +15,14 @@ Claude Code:
 
 ```
 /plugin marketplace add transparent-pegasus/pegasus-skills
-/plugin install pegasus-skills@pegasus-skills
+/plugin install herdr-orchestration@herdr-orchestration
 ```
 
 Codex:
 
 ```bash
 codex plugin marketplace add https://github.com/transparent-pegasus/pegasus-skills
-codex plugin add pegasus-skills@pegasus-skills
+codex plugin add herdr-orchestration@herdr-orchestration
 ```
 
 Cursor:
@@ -35,25 +31,18 @@ Cursor:
 cursor-agent plugin marketplace add https://github.com/transparent-pegasus/pegasus-skills
 ```
 
-Working on the skills themselves? Point the marketplace at the checkout instead of the URL — `codex plugin marketplace add /path/to/pegasus-skills` — and the plugin resolves from `./` in place.
-
 ## Layout
 
 ```
-.agents/plugins/marketplace.json    cross-tool marketplace (Codex reads this one)
-.claude-plugin/                     plugin.json + marketplace.json  (Claude Code)
-.codex-plugin/plugin.json           Codex manifest, with the interface block
-.cursor-plugin/                     plugin.json + marketplace.json  (Cursor)
+.agents/plugins/    marketplace.json                (cross-tool; Codex reads this)
+.claude-plugin/     plugin.json + marketplace.json  (Claude Code)
+.codex-plugin/      plugin.json with interface block (Codex)
+.cursor-plugin/     plugin.json + marketplace.json  (Cursor)
 skills/<name>/SKILL.md              the skill itself
 skills/<name>/agents/openai.yaml    Codex interface metadata, per skill
 ```
 
-Manifests are written out per tool rather than shared, because each CLI resolves a different, only partly overlapping set of paths:
-
-- **Plugin manifest** — Codex tries `.codex-plugin/plugin.json`, then `.claude-plugin/plugin.json`, then `.cursor-plugin/plugin.json`.
-- **Marketplace manifest** — Codex tries `.agents/plugins/marketplace.json`, `.agents/plugins/api_marketplace.json`, `.claude-plugin/marketplace.json`, `.cursor-plugin/marketplace.json`. It does **not** read `.codex-plugin/marketplace.json`, which is why the cross-tool `.agents/` path is the one that makes Codex installable. Cursor reads `.cursor-plugin/marketplace.json` and falls back to `.claude-plugin/marketplace.json`.
-
-Adding a skill means one new `skills/<name>/` directory; no manifest changes, because every tool is pointed at `./skills/`.
+Codex resolves plugin manifests in the order `.codex-plugin/` → `.claude-plugin/` → `.cursor-plugin/`, and Cursor falls back from `.cursor-plugin/` to `.claude-plugin/`, so the manifests are kept in sync rather than deduplicated. Codex never reads `.codex-plugin/marketplace.json`, so the cross-tool `.agents/plugins/marketplace.json` is what makes it installable there.
 
 ## Before first use with a new agent CLI
 
