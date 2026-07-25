@@ -14,21 +14,21 @@ Requires `HERDR_ENV=1`. Outside herdr the skills do nothing.
 Claude Code:
 
 ```
-/plugin marketplace add transparent-pegasus/pegasus-skills
+/plugin marketplace add transparent-pegasus/herdr-orchestration
 /plugin install herdr-orchestration@herdr-orchestration
 ```
 
 Codex:
 
 ```bash
-codex plugin marketplace add https://github.com/transparent-pegasus/pegasus-skills
+codex plugin marketplace add https://github.com/transparent-pegasus/herdr-orchestration
 codex plugin add herdr-orchestration@herdr-orchestration
 ```
 
 Cursor:
 
 ```bash
-cursor-agent plugin marketplace add https://github.com/transparent-pegasus/pegasus-skills
+cursor-agent plugin marketplace add https://github.com/transparent-pegasus/herdr-orchestration
 ```
 
 ## Layout

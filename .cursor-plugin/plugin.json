@@ -6,8 +6,8 @@
     "name": "transparent-pegasus",
     "url": "https://github.com/transparent-pegasus"
   },
-  "homepage": "https://github.com/transparent-pegasus/pegasus-skills",
-  "repository": "https://github.com/transparent-pegasus/pegasus-skills",
+  "homepage": "https://github.com/transparent-pegasus/herdr-orchestration",
+  "repository": "https://github.com/transparent-pegasus/herdr-orchestration",
   "license": "MIT",
   "keywords": [
     "herdr",
