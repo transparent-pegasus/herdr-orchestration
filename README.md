@@ -1,0 +1,54 @@
+# pegasus-skills
+
+Multi-pane agent orchestration for [herdr](https://herdr.dev). Every task that arrives directly from the user is routed through the pane that received it; that pane plans and designs, sends plans for independent double review, and delegates the rest to idle sibling agent panes over a composer-safe transport. Role assignments and exhaustion fallbacks live in one swappable `roles.yaml`.
+
+Requires `HERDR_ENV=1`. Outside herdr the skills do nothing.
+
+## Skills
+
+- [`orchestration`](skills/orchestration/) — orchestrator rules, task routing, the complex-coding boundary, plan double review, the delegation contract, and fallback resolution.
+- [`using-herdr-sibling-panes`](skills/using-herdr-sibling-panes/) — the delegation transport: composer-safe submission, the completion-marker task contract, failure handling, and a probe that verifies a new agent CLI can be driven at all.
+
+## Install
+
+Claude Code:
+
+```
+/plugin marketplace add transparent-pegasus/pegasus-skills
+/plugin install pegasus-skills@pegasus-skills
+```
+
+Codex:
+
+```bash
+codex plugin marketplace add https://github.com/transparent-pegasus/pegasus-skills
+codex plugin add pegasus-skills
+```
+
+Cursor:
+
+```bash
+cursor-agent plugin marketplace add https://github.com/transparent-pegasus/pegasus-skills
+```
+
+## Layout
+
+```
+.claude-plugin/     plugin.json + marketplace.json  (Claude Code)
+.codex-plugin/      plugin.json with interface block (Codex)
+.cursor-plugin/     plugin.json + marketplace.json  (Cursor)
+skills/<name>/SKILL.md              the skill itself
+skills/<name>/agents/openai.yaml    Codex interface metadata, per skill
+```
+
+Codex resolves plugin manifests in the order `.codex-plugin/` → `.claude-plugin/` → `.cursor-plugin/`, and Cursor falls back from `.cursor-plugin/` to `.claude-plugin/`, so the three manifests are kept in sync rather than deduplicated.
+
+## Before first use with a new agent CLI
+
+Composer key bindings differ per CLI and change across releases. `ctrl+c` quits Codex from an idle composer; `ctrl+enter` does not submit there at all. Verify a pane can actually be driven before delegating to it:
+
+```bash
+skills/using-herdr-sibling-panes/scripts/probe-composer.sh "$PANE"
+```
+
+Verified 2026-07-25 against codex 0.145.0, cursor-agent 2026.07.23-e383d2b, and grok 0.2.112.

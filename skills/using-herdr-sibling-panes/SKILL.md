@@ -38,10 +38,13 @@ Agent CLIs take input through a composer — a stateful input box with slash-com
 * **Autocomplete is a lie.** A composer can *render* the highlighted completion (`/clear`) while its buffer still holds what was actually typed (`/cl`). Submitting then sends the partial text to the model as a chat message. Always write a slash command in full, in a single `send-text` call.
 * **Retained state and races.** A composer can keep the previous prompt or queued follow-ups after completion, and text insertion and key handling are asynchronous, so back-to-back CLI calls can race even with the right keys. Later delegation text then concatenates onto stale input.
 
-Therefore, never submit `/clear` or delegated prompts to an agent pane with `pane run`. Use the bundled helper, which clears the composer, resets the session, submits exactly one instruction, and confirms the pane actually started:
+Therefore, never submit `/clear` or delegated prompts to an agent pane with `pane run`. Use the bundled helper, which clears the composer, resets the session, submits exactly one instruction, and confirms the pane actually started.
+
+`$SKILL_DIR` below is the directory containing *this* `SKILL.md`. The scripts ship next to it, so resolve them against it — never against the repo you are working in.
 
 ```bash
-COMPOSER_SUBMIT=using-herdr-sibling-panes/scripts/composer-submit.sh
+SKILL_DIR=<directory containing this SKILL.md>
+COMPOSER_SUBMIT="$SKILL_DIR/scripts/composer-submit.sh"
 rtk "$COMPOSER_SUBMIT" "$PANE" "$INSTRUCTION"
 ```
 
@@ -91,7 +94,7 @@ Use `pane run` normally for shells and other terminal programs; this workaround 
 Before an agent type is used as a delegation target for the first time, and again after that CLI is upgraded, run the probe against one idle pane of that type:
 
 ```bash
-rtk using-herdr-sibling-panes/scripts/probe-composer.sh "$PANE"
+rtk "$SKILL_DIR/scripts/probe-composer.sh" "$PANE"
 ```
 
 It checks, in order: the pane is an idle agent pane; leftover composer text clears without killing the TUI; `/clear` resets the session and the TUI survives; an instruction submits and the pane starts working; the split completion marker is not matched by the prompt echo; the marker is matched when the task finishes; a running task can be interrupted and the pane returns to idle; and the agent process is the same one it was before the probe.
@@ -105,7 +108,7 @@ Every instruction must include the repo path, exact command or path, edit policy
 ```bash
 PANE=w2:p18
 INSTRUCTION="Please run rtk make lint in /path/to/repo. Make no edits. Report the command, exit code, and errors. End with LINT_OK immediately followed by _7F3A."
-COMPOSER_SUBMIT=using-herdr-sibling-panes/scripts/composer-submit.sh
+COMPOSER_SUBMIT="$SKILL_DIR/scripts/composer-submit.sh"
 rtk "$COMPOSER_SUBMIT" "$PANE" "$INSTRUCTION"
 rtk herdr wait output "$PANE" --match "LINT_OK_7F3A" --timeout 300000
 rtk herdr pane list

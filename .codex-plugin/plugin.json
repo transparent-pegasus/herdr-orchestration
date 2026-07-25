@@ -1,0 +1,28 @@
+{
+  "name": "pegasus-skills",
+  "version": "0.1.0",
+  "description": "Multi-pane agent orchestration for herdr. Routes user tasks through the pane that received them, delegates to idle sibling agent panes over a composer-safe transport, and substitutes a fallback agent when one is exhausted.",
+  "author": {
+    "name": "transparent-pegasus",
+    "url": "https://github.com/transparent-pegasus"
+  },
+  "homepage": "https://github.com/transparent-pegasus/pegasus-skills",
+  "repository": "https://github.com/transparent-pegasus/pegasus-skills",
+  "license": "MIT",
+  "keywords": ["herdr", "orchestration", "delegation", "multi-agent", "tui"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Pegasus Skills",
+    "shortDescription": "Herdr multi-pane orchestration and delegation",
+    "longDescription": "Route every task that arrives from the user through the pane that received it, delegate complex coding and routine work to idle sibling agent panes in herdr, and fall back to a substitute agent when one is exhausted.",
+    "developerName": "transparent-pegasus",
+    "category": "Productivity",
+    "capabilities": ["Instructions"],
+    "websiteURL": "https://github.com/transparent-pegasus/pegasus-skills",
+    "defaultPrompt": [
+      "Route this task through the appropriate herdr agents.",
+      "Delegate this to an idle sibling pane and report back.",
+      "Verify that this agent pane can be driven before delegating to it."
+    ]
+  }
+}
