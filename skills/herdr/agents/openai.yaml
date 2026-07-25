@@ -1,0 +1,7 @@
+interface:
+  display_name: "Control Herdr"
+  short_description: "Inspect and control herdr panes, tabs and agents"
+  default_prompt: "Use $herdr to inspect or control the current herdr session."
+
+policy:
+  allow_implicit_invocation: true

@@ -8,6 +8,7 @@ Requires `HERDR_ENV=1`. Outside herdr the skills do nothing.
 
 - [`orchestration`](skills/orchestration/) — orchestrator rules, task routing, the complex-coding boundary, plan double review, the delegation contract, and fallback resolution.
 - [`using-herdr-sibling-panes`](skills/using-herdr-sibling-panes/) — the delegation transport: composer-safe submission, the completion-marker task contract, failure handling, and a probe that verifies a new agent CLI can be driven at all.
+- [`herdr`](skills/herdr/) — the official herdr skill, vendored unmodified from [`ogulcancelik/herdr`](https://github.com/ogulcancelik/herdr): the `herdr` CLI reference the other two build on.
 
 ## Install
 
@@ -53,3 +54,9 @@ skills/using-herdr-sibling-panes/scripts/probe-composer.sh "$PANE"
 ```
 
 Verified 2026-07-25 against codex 0.145.0, cursor-agent 2026.07.23-e383d2b, and grok 0.2.112.
+
+## License
+
+Apache License 2.0, matching upstream herdr. See [`LICENSE`](LICENSE).
+
+`skills/herdr/SKILL.md` is copyright its herdr authors and is vendored unmodified under the same license; everything else is copyright the herdr-orchestration authors.

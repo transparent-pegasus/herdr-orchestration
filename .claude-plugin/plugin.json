@@ -9,7 +9,7 @@
   },
   "homepage": "https://github.com/transparent-pegasus/herdr-orchestration",
   "repository": "https://github.com/transparent-pegasus/herdr-orchestration",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "herdr",
     "orchestration",
