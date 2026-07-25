@@ -20,3 +20,13 @@ roles:
   generalist:
     description: Everything else — simple coding, search, file inspection, tests, lint, routine operations
     agent: cursor
+
+# Substitutes for an agent that cannot take work right now — usage/rate limit
+# reached, no pane of that type in the session, or every pane of that type
+# crashed and would not restart. See "Exhaustion and fallback" in SKILL.md for
+# what counts as exhausted and how a substitute is chosen.
+#
+# Tried left to right; the first substitute with a usable idle pane wins.
+# An agent with no entry here has no substitute.
+fallbacks:
+  cursor: [grok]

@@ -21,67 +21,121 @@ What to delegate depends on how this skill was entered:
 ## Workflow
 
 1. Run `herdr pane list` and identify your own pane (the orchestrator) and idle sibling agent panes.
-2. Select only sibling agent panes with `agent_status: idle` or `done`.
+2. Select only sibling panes that have an `agent` field and `agent_status: idle` or `done`. A pane with no `agent` field is a plain shell or a crashed agent — see "Failure handling".
 3. Distribute independent work items across the available panes, one instruction per pane.
-4. Before every delegation, cancel any retained draft/follow-up and clear the target agent pane with the composer-safe submit sequence below.
-5. Submit one self-contained instruction with the same composer-safe sequence.
-6. Do not send a second prompt such as "Please run the task I just sent." The submitted instruction is already running.
-7. Confirm the task started by checking `herdr pane list` or reading output until the pane is `working`. A very short task may finish before polling; in that case verify the new response in `pane read`.
-8. If the intended instruction alone still sits in the composer, send only the force-send sequence (`esc ctrl+enter`) once and inspect again. If it contains stale or concatenated text, cancel it (`ctrl+c`, settle, `esc` — the first two steps of the fallback sequence below) and resubmit from step 4. Never append or retype into a non-empty composer.
-9. Wait for the instruction's unique completion marker, then re-read `pane list`. If it is still `working`, wait for `idle`; if it is already `idle` or `done`, continue.
-10. Read the completed result and integrate it in the orchestrator pane.
+4. Submit one self-contained instruction per pane with `scripts/composer-submit.sh`. It resets the target session and submits the instruction in one call; do not send `/clear` yourself.
+5. Do not send a second prompt such as "Please run the task I just sent." The submitted instruction is already running.
+6. Wait for the instruction's unique completion marker with `herdr wait output`, always with a timeout.
+7. On a marker match, re-read `pane list`. If the pane is still `working`, wait for `idle`; if it is already `idle` or `done`, continue. Agent status lags behind the visible output — the marker is the completion signal, status is not.
+8. On anything other than a marker match, go to "Failure handling". Never retype into a composer to "fix" a failed submission.
+9. Read the completed result and integrate it in the orchestrator pane.
 
 ## Composer-safe submission
 
 Agent CLIs take input through a composer — a stateful input box with slash-command autocomplete, follow-up suggestions, and message queueing. Composers cannot be driven reliably with `herdr pane run`, regardless of which agent runs in the pane:
 
-* **Wrong submit key.** A composer may reserve plain Enter for a default action (nudge, accept a suggestion) and require a different chord to force-send the prompt.
-* **Keys consumed by UI.** Slash-command and autocomplete popups can swallow the single Enter that `pane run` sends, leaving the text sitting in the composer.
-* **Retained state and races.** A composer can keep the previous prompt or queued follow-ups after completion, and text insertion and key handling are asynchronous, so back-to-back CLI calls can race even with the right keys. Later delegation text then concatenates onto stale input such as an unsubmitted `/clear`.
+* **Keys consumed by UI.** Slash-command and autocomplete popups swallow the single Enter that `pane run` sends, leaving the text sitting in the composer.
+* **Autocomplete is a lie.** A composer can *render* the highlighted completion (`/clear`) while its buffer still holds what was actually typed (`/cl`). Submitting then sends the partial text to the model as a chat message. Always write a slash command in full, in a single `send-text` call.
+* **Retained state and races.** A composer can keep the previous prompt or queued follow-ups after completion, and text insertion and key handling are asynchronous, so back-to-back CLI calls can race even with the right keys. Later delegation text then concatenates onto stale input.
 
-Therefore, never submit `/clear` or delegated prompts to an agent pane with `pane run`. Always use a submission sequence that cancels retained state, waits at bounded settle points, clears the conversation, and force-submits exactly one instruction. The bundled helper implements exactly that sequence:
+Therefore, never submit `/clear` or delegated prompts to an agent pane with `pane run`. Use the bundled helper, which clears the composer, resets the session, submits exactly one instruction, and confirms the pane actually started:
 
 ```bash
-COMPOSER_SUBMIT=.agents/skills/using-herdr-sibling-panes/scripts/composer-submit.sh
+COMPOSER_SUBMIT=using-herdr-sibling-panes/scripts/composer-submit.sh
 rtk "$COMPOSER_SUBMIT" "$PANE" "$INSTRUCTION"
 ```
 
-The helper uses `ctrl+c` to cancel retained state, `esc` to dismiss completion/follow-up UI, and `esc ctrl+enter` to force-send while emptying the composer. The `esc ctrl+enter` pair is required even when no completion menu is visible. Before first use with a new agent CLI, verify these cancel, dismiss, and force-send keys against that composer and adjust the helper if they differ.
+Exit codes: `0` submitted and running, `2` bad usage or the pane is not a usable idle agent pane, `3` the instruction did not submit.
 
-If the helper is unavailable, use this exact fallback. Do not remove the settle points:
+### Verified keys
+
+Verified 2026-07-25 against codex 0.145.0, cursor-agent 2026.07.23-e383d2b, and grok 0.2.112 with `scripts/probe-composer.sh`. All three agree, so the helper uses one sequence:
+
+| purpose | key / text | notes |
+| --- | --- | --- |
+| clear composer | `ctrl+u` | leaves the session intact |
+| reset session | `/clear` + `enter` | all three CLIs have `/clear` |
+| dismiss popup | `esc` | keeps composer text, closes slash/mention popup |
+| submit | `enter` | |
+| interrupt a running task | `esc` | |
+
+Two keys that look plausible and are wrong:
+
+* **`ctrl+c` quits Codex.** On an idle Codex composer it exits the TUI and drops the pane to a shell. Never use it to cancel composer state; `ctrl+u` does that job without the exit path.
+* **`ctrl+enter` does not submit in Codex.** The text stays in the composer and the delegation silently never runs.
+
+If the helper is unavailable, this is the same sequence by hand. Do not remove the settle points:
 
 ```bash
-rtk herdr pane send-keys "$PANE" ctrl+c
-rtk sleep 0.40
-rtk herdr pane send-keys "$PANE" esc
+rtk herdr pane send-keys "$PANE" ctrl+u
 rtk sleep 0.40
 rtk herdr pane send-text "$PANE" "/clear"
 rtk sleep 0.40
-rtk herdr pane send-keys "$PANE" esc ctrl+enter
-rtk sleep 0.75
+rtk herdr pane send-keys "$PANE" esc
+rtk sleep 0.40
+rtk herdr pane send-keys "$PANE" enter
+rtk sleep 1.20
+rtk herdr pane send-keys "$PANE" ctrl+u
+rtk sleep 0.40
 rtk herdr pane send-text "$PANE" "$INSTRUCTION"
 rtk sleep 0.40
-rtk herdr pane send-keys "$PANE" esc ctrl+enter
+rtk herdr pane send-keys "$PANE" esc
+rtk sleep 0.40
+rtk herdr pane send-keys "$PANE" enter
 ```
 
 Use `pane run` normally for shells and other terminal programs; this workaround is specifically for agent composers.
 
-## Task contract
+### Onboarding a new agent CLI
 
-Every instruction must include the repo path, exact command or path, edit policy, report format, and a unique final completion marker that `wait output` can match. Keep the marker at 16 ASCII characters or fewer so terminal wrapping cannot split it. The complete marker must not occur verbatim in the submitted prompt, because `wait output` also sees user text; describe it as two fragments that the delegated agent must concatenate.
+Before an agent type is used as a delegation target for the first time, and again after that CLI is upgraded, run the probe against one idle pane of that type:
 
 ```bash
-PANE=1-2
+rtk using-herdr-sibling-panes/scripts/probe-composer.sh "$PANE"
+```
+
+It checks, in order: the pane is an idle agent pane; leftover composer text clears without killing the TUI; `/clear` resets the session and the TUI survives; an instruction submits and the pane starts working; the split completion marker is not matched by the prompt echo; the marker is matched when the task finishes; a running task can be interrupted and the pane returns to idle; and the agent process is the same one it was before the probe.
+
+Any `FAIL` means that agent type is not delegatable yet — find the CLI's real key for the failing step and update the helper before sending it work.
+
+## Task contract
+
+Every instruction must include the repo path, exact command or path, edit policy, report format, and a unique final completion marker that `wait output` can match. Keep the marker at 16 ASCII characters or fewer so terminal wrapping cannot split it. The complete marker must not occur verbatim in the submitted prompt, because `wait output` also sees user text; describe it as two fragments that the delegated agent must concatenate. Keep the instruction on a single line — the helper rejects embedded newlines.
+
+```bash
+PANE=w2:p18
 INSTRUCTION="Please run rtk make lint in /path/to/repo. Make no edits. Report the command, exit code, and errors. End with LINT_OK immediately followed by _7F3A."
-COMPOSER_SUBMIT=.agents/skills/using-herdr-sibling-panes/scripts/composer-submit.sh
+COMPOSER_SUBMIT=using-herdr-sibling-panes/scripts/composer-submit.sh
 rtk "$COMPOSER_SUBMIT" "$PANE" "$INSTRUCTION"
-rtk herdr pane list
-rtk herdr pane read 1-2 --source recent --lines 40
-rtk herdr wait output 1-2 --match "LINT_OK_7F3A" --timeout 300000
+rtk herdr wait output "$PANE" --match "LINT_OK_7F3A" --timeout 300000
 rtk herdr pane list
 # If the target is still working:
-rtk herdr wait agent-status 1-2 --status idle --timeout 300000
-rtk herdr pane read 1-2 --source recent --lines 120
+rtk herdr wait agent-status "$PANE" --status idle --timeout 300000
+rtk herdr pane read "$PANE" --source recent --lines 120
 ```
 
 Re-read pane ids after panes close because ids can compact. Do not send work to `working` or `blocked` panes, and do not rely on a single terminal status name for completion.
+
+## Failure handling
+
+`herdr wait output` exits non-zero on timeout, so every delegation ends in exactly one of these states. Diagnose with `herdr pane get`, `herdr pane read --source recent`, and `herdr pane process-info --pane "$PANE"`.
+
+| state | how it looks | what to do |
+| --- | --- | --- |
+| **finished** | marker matched | read the result, integrate it |
+| **did not submit** | helper exits `3` | check for the marker first — a very fast task can finish before the status poll sees it. Otherwise re-run the helper once; a second `3` means the keys are wrong for this CLI, so run the probe |
+| **crashed** | `pane get` has no `agent` field; `pane read` shows a shell prompt | restart it in place with the argv from `pane process-info` taken *before* the crash, then re-delegate once |
+| **blocked** | `agent_status: blocked` | the agent is waiting on an approval or input prompt. Do not answer it blindly — report it to the user |
+| **interrupted** | pane idle, no marker, output ends mid-task | re-delegate once to the same pane. A second interruption is a failure, not a retry loop |
+| **errored** | pane idle, no marker, output ends in an error | report the error verbatim; do not paper over it with a retry |
+| **exhausted** | usage/rate-limit message in the output, or the pane refuses work while idle | see below |
+
+### Exhaustion and fallback
+
+Treat an agent type as **exhausted** when its output says the usage or rate limit is reached, or when two delegations to two different idle panes of that type both come back with no marker and no completed work. Exhaustion is a property of the agent type, not of one pane — do not retry it on a sibling pane of the same type.
+
+Do not match vendor error strings; they change with every CLI release. The reliable signal is the outcome: no marker, twice, on two panes.
+
+When exhausted, report it upward. If this skill was entered from the `orchestration` skill, the orchestrator resolves a substitute from the `fallbacks:` map in its `roles.yaml` and re-delegates there. Standalone, run the work in the orchestrator pane and say which agent was skipped and why.
+
+Record the exhausted agent type for the rest of the task and stop routing to it, so one exhausted agent does not burn a retry on every subsequent delegation.

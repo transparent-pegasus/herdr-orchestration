@@ -1,13 +1,13 @@
 ---
 name: orchestration
-description: "Route every task received directly from the user through the pane that received it (the orchestrator) in herdr unless the user explicitly denies orchestration. Does NOT apply to tasks delegated from another pane — execute those yourself, never re-delegate. Role assignments are defined in a swappable roles.yaml file next to the skill: planning/design is done by the orchestrator and double-reviewed by Reviewer agents; complex coding goes to Coder agents; everything else goes to Generalist agents, via using-herdr-sibling-panes. Roles bind to agent types, not reserved panes — any idle pane of the right type can take any task."
+description: "Route every task received directly from the user through the pane that received it (the orchestrator) in herdr unless the user explicitly denies orchestration. Does NOT apply to tasks delegated from another pane — execute those yourself, never re-delegate. Role assignments are defined in a swappable roles.yaml file next to the skill: planning/design is done by the orchestrator and double-reviewed by Reviewer agents; complex coding goes to Coder agents; everything else goes to Generalist agents, via using-herdr-sibling-panes. Roles bind to agent types, not reserved panes — any idle pane of the right type can take any task, and an exhausted agent is replaced by its substitute from the roles.yaml fallbacks map."
 ---
 
 # Orchestration
 
 ## Role assignments (swap in roles.yaml)
 
-Role-to-agent assignments live in [`roles.yaml`](roles.yaml) — the single source of truth for who does what. To change an assignment, edit ONLY that file; the rest of the skill refers to roles, not tool names. Read `roles.yaml` at the start of every orchestrated task to resolve which agent type each role maps to.
+Role-to-agent assignments live in [`roles.yaml`](roles.yaml) — the single source of truth for who does what. To change an assignment, edit ONLY that file; the rest of the skill refers to roles, not tool names. Read `roles.yaml` at the start of every orchestrated task to resolve which agent type each role maps to, and its `fallbacks:` map for the substitute to use when an agent cannot take work.
 
 Panes are NOT reserved per role. Roles bind to agent types, not to specific panes: at delegation time, pick any idle pane of the matching agent type. A pane that just finished a review can take a coder or generalist task next, and vice versa. When no pane of the right type is idle, wait or run the work in the orchestrator pane — do not interrupt a working pane.
 
@@ -17,7 +17,7 @@ Apply this skill only when the task came directly from the user. Whichever pane 
 
 **No re-delegation.** If your task arrived as a delegated instruction from another pane (not from the user), this skill does not apply: execute the task yourself in your own pane and never delegate it onward, even if it looks routine. Re-delegation creates cascades where multiple panes contend for the same siblings and no one does the work.
 
-Use `using-herdr-sibling-panes` for every delegation. Follow its composer-safe `/clear` → instruction submission sequence and wait for the delegated result before integrating it. Do not use `pane run` for agent-pane prompts.
+Use `using-herdr-sibling-panes` for every delegation. Submit through its bundled `composer-submit.sh` and wait for the delegated result before integrating it. Do not use `pane run` for agent-pane prompts.
 
 ## Task routing
 
@@ -55,6 +55,19 @@ Default when uncertain: treat it as complex and send it to the Coder — a misro
 Draft the plan in the orchestrator pane, then run both reviews through `using-herdr-sibling-panes` (one to each Reviewer agent, in separate panes), wait for both to complete, compare the findings, resolve disagreements, and only then act or report. Reviewers are reviewers, not substitutes for the orchestrator's final judgment.
 
 Degrade instead of blocking when the full Reviewer set is unavailable. A Reviewer agent counts as available if any pane of that type exists in the session, even if it is currently busy — wait for busy panes, never interrupt them. If only one Reviewer agent type is available, run a single delegated review with it and state in the final report that the second independent review was skipped. If none is available, the orchestrator critically reviews its own plan and states that no independent review happened. Never delegate a review of a plan to the pane that drafted it.
+
+The two reviews must come from two different agent types. If applying a fallback would put the same agent type in both Reviewer slots, do not use it there: leave that slot unavailable and degrade to a single review instead.
+
+## Exhaustion and fallback
+
+An agent type is exhausted when `using-herdr-sibling-panes` reports it exhausted — its output says the usage or rate limit is reached, or two delegations to two different idle panes of that type both came back with no marker and no completed work. That skill's "Failure handling" section owns the detection; this skill owns what happens next.
+
+1. Look the exhausted agent up in the `fallbacks:` map in `roles.yaml` and take the first substitute that has a usable idle pane, subject to the two-reviewer rule above.
+2. Re-delegate the same self-contained instruction to the substitute. Do not rewrite the task to suit it.
+3. If the agent has no `fallbacks:` entry, or every substitute is itself unavailable, degrade: run the work in the orchestrator pane if it is safe to do so, otherwise stop and report.
+4. Remember the exhausted agent type for the rest of the task and route around it from then on.
+
+Always state in the final report which role fell back, to which agent, and why.
 
 ## Delegation contract
 
