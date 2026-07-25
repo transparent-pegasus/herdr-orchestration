@@ -1,6 +1,6 @@
 {
   "name": "pegasus-skills",
-  "description": "Multi-pane agent orchestration for herdr.",
+  "description": "Agent skills by transparent-pegasus.",
   "owner": {
     "name": "transparent-pegasus",
     "url": "https://github.com/transparent-pegasus"
@@ -8,7 +8,7 @@
   "plugins": [
     {
       "name": "pegasus-skills",
-      "description": "Route user tasks through the orchestrator pane and delegate to idle sibling agent panes in herdr, with role assignments and exhaustion fallbacks in roles.yaml.",
+      "description": "Agent skills by transparent-pegasus, shared across Claude Code, Codex and Cursor. Currently multi-pane agent orchestration and delegation for herdr; more skills to follow.",
       "source": "./",
       "category": "productivity"
     }

@@ -1,0 +1,20 @@
+{
+  "name": "pegasus-skills",
+  "interface": {
+    "displayName": "Pegasus Skills"
+  },
+  "plugins": [
+    {
+      "name": "pegasus-skills",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
