@@ -1,32 +1,116 @@
-# Role assignments for the orchestration skill.
-# Single source of truth for who does what — to change an assignment,
-# edit ONLY this file. SKILL.md refers to roles, never to agent names.
+# Shipped defaults for the orchestration skill: the role list, and the
+# role assigned to every delegation task.
 #
-# Roles bind to agent types, not reserved panes: at delegation time,
-# any idle pane of the matching agent type can take the task.
+# THIS FILE IS THE DEFAULT, NOT THE PLACE TO CUSTOMIZE A REPO.
+# A target repository overrides any key below in its own
+# `.herdr-orchestration/config.yaml` — that file wins key by key, and anything
+# it omits falls back here. Plugin installations are read-only (an update
+# clobbers local edits), so the repo file is the only durable layer there.
+# See "Configuration resolution" in SKILL.md.
 
+# ---------------------------------------------------------------------------
+# Role list. Roles bind to agent types, not to reserved panes: at delegation
+# time, any idle pane of the matching agent type can take the task.
+# `orchestrator` is not an agent type — it means the pane the user typed into.
+#
+# `agent:` (singular) binds one agent type: one task, one delegation.
+# `agents:` (a list) binds several, and means ONE DELEGATION PER ENTRY — the
+# task runs once per listed agent type, in separate panes. That is what makes
+# a review a double review; it is a property of the role, not of any one task.
+# See "Roles that bind to a list" in SKILL.md.
+# ---------------------------------------------------------------------------
 roles:
   planning-design:
     description: Planning and design work
-    agent: orchestrator # runs in the orchestrator pane itself
+    agent: orchestrator
   reviewer:
-    description: Independent double review of plans and designs
-    agents: # one review each, independent
+    description: >-
+      Independent review — plans, designs, and implemented code. Bound to a
+      list, so every task assigned to this role runs once per listed agent
+      type.
+    agents:
       - codex
       - cursor
   coder:
     description: Complex coding (see "Complex coding boundary" in SKILL.md)
     agent: codex
   generalist:
-    description: Everything else — simple coding, search, file inspection, tests, lint, routine operations
+    description: Simple coding, search, file inspection, tests, lint, routine operations
     agent: cursor
 
 # Substitutes for an agent that cannot take work right now — usage/rate limit
 # reached, no pane of that type in the session, or every pane of that type
-# crashed and would not restart. See "Exhaustion and fallback" in SKILL.md for
-# what counts as exhausted and how a substitute is chosen.
+# crashed and would not restart. See "Exhaustion and fallback" in SKILL.md.
 #
 # Tried left to right; the first substitute with a usable idle pane wins.
 # An agent with no entry here has no substitute.
 fallbacks:
   cursor: [grok]
+
+# ---------------------------------------------------------------------------
+# Delegation defaults that apply to every task. See "Delegation scope" in
+# SKILL.md and in using-herdr-sibling-panes.
+# ---------------------------------------------------------------------------
+delegation:
+  # Which panes may receive a delegation, relative to the orchestrator pane.
+  # `herdr pane list` reports `pane_id`, `tab_id`, `workspace_id`, and `cwd`
+  # for every pane, so the filter is a field comparison, not a guess.
+  #   tab        only panes whose `tab_id` equals the orchestrator's. The
+  #              default: a tab is how a herdr user separates projects, so a
+  #              pane in another tab is usually another repository's pane.
+  #   workspace  any pane in the orchestrator's `workspace_id`, any tab
+  #   session    every agent pane herdr reports
+  pane_scope: tab
+
+# ---------------------------------------------------------------------------
+# Delegation tasks, each assigned a role. This is the routing table: the skill
+# reads it instead of hard-coding "complex coding goes to Coder".
+#
+# Every task takes the same knobs:
+#   role     — which role from the list above performs it
+#   mode     — where it runs:
+#                delegate     a fresh idle pane of `role`, via
+#                             using-herdr-sibling-panes
+#                orchestrator the orchestrator pane itself; nothing delegated
+#   enabled  — review tasks only: `false` removes the gate entirely.
+#              Work tasks are mandatory; to stop delegating one, set
+#              `mode: orchestrator` rather than disabling it.
+#
+# Every non-default assignment, every non-default mode, and every disabled
+# review is named in the final report.
+# ---------------------------------------------------------------------------
+assignments:
+
+  # --- work tasks (mandatory; `mode` decides whether they are delegated) ---
+
+  plan-and-design:
+    description: Brainstorming, design docs, and implementation plans
+    role: planning-design
+    mode: orchestrator # the orchestrator holds the design context; delegating loses it
+  complex-coding:
+    description: Implementation tasks over the "Complex coding boundary" in SKILL.md
+    role: coder
+    mode: delegate
+  simple-coding:
+    description: Localized, pattern-following edits under that same boundary
+    role: generalist
+    mode: delegate
+  chores:
+    description: Lookups, file moves, log gathering, mechanical edits, lint/format runs
+    role: generalist
+    mode: delegate
+  verification:
+    description: >-
+      Running the repository's build, test, and lint commands. A delegated run
+      is a claim: the orchestrator accepts it on the quoted output in the
+      report file, or re-executes the decisive command itself.
+    role: generalist
+    mode: delegate
+
+  # --- review tasks (optional; `enabled: false` removes the gate) ---
+
+  plan-double-review:
+    description: Independent review of a plan or design before it is acted on
+    role: reviewer
+    mode: delegate
+    enabled: true
