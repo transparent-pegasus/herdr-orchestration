@@ -109,8 +109,15 @@ assignments:
 
   # --- review tasks (optional; `enabled: false` removes the gate) ---
 
-  plan-double-review:
+  plan-review:
     description: Independent review of a plan or design before it is acted on
+    role: reviewer
+    mode: delegate
+    enabled: true
+  integration-review:
+    description: >-
+      Independent review of the integrated result when implementation was
+      split across multiple panes; a single-implementer task skips it
     role: reviewer
     mode: delegate
     enabled: true

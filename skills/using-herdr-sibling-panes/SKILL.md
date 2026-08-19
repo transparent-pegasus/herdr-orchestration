@@ -193,7 +193,7 @@ Helper exits `2` and `4` mean the delegation never started. Do not call `herdr w
 
 ### A delegated pane can stall on its own approval prompt
 
-An agent CLI that asks before each shell command or MCP tool call will stop mid-task waiting for an answer nobody is watching for. Observed on cursor panes on both halves of a double review: the pane sat at `Run this MCP tool?` or `Run (once) (y)` while `agent_status` read `blocked` on one pane and `idle` on the other, so status alone said "stuck" for one and "finished" for the other, and neither was true. The completion marker never arrived and the review silently degraded to one reviewer.
+An agent CLI that asks before each shell command or MCP tool call will stop mid-task waiting for an answer nobody is watching for. Observed on cursor panes on both halves of a two-reviewer plan review: the pane sat at `Run this MCP tool?` or `Run (once) (y)` while `agent_status` read `blocked` on one pane and `idle` on the other, so status alone said "stuck" for one and "finished" for the other, and neither was true. The completion marker never arrived and the review silently degraded to one reviewer.
 
 **Prevent it rather than answer it.** A pane that will take delegated work should be started with the permissions it needs already granted in that CLI's own configuration — cursor's `permissions.allow`, codex's sandbox/approval settings, and so on. That is a one-time setup on the pane, outside any run, and it removes the stall entirely.
 

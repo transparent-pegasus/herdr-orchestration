@@ -1,12 +1,12 @@
 # herdr-orchestration
 
-Multi-pane agent orchestration for [herdr](https://herdr.dev). Every task that arrives directly from the user is routed through the pane that received it; that pane plans and designs, sends plans for independent double review, and delegates the rest to idle sibling agent panes over a composer-safe transport. Who performs each kind of work comes from a routing table in `roles.yaml`, which a repository overrides key by key in its own `.herdr-orchestration/config.yaml`.
+Multi-pane agent orchestration for [herdr](https://herdr.dev). Every task that arrives directly from the user is routed through the pane that received it; that pane plans and designs, sends plans for independent review, and delegates the rest to idle sibling agent panes over a composer-safe transport. Who performs each kind of work comes from a routing table in `roles.yaml`, which a repository overrides key by key in its own `.herdr-orchestration/config.yaml`.
 
 Requires `HERDR_ENV=1`. Outside herdr the skills do nothing.
 
 ## Skills
 
-- [`orchestration`](skills/orchestration/) — orchestrator rules, configuration resolution, the routing table, delegation scope, the complex-coding boundary, plan double review, the delegation contract, and fallback resolution.
+- [`orchestration`](skills/orchestration/) — orchestrator rules, configuration resolution, the routing table, delegation scope, the complex-coding boundary, the plan and integration review gates, the delegation contract, and fallback resolution.
 - [`using-herdr-sibling-panes`](skills/using-herdr-sibling-panes/) — the delegation transport: composer-safe submission, the completion-marker task contract, failure handling, and a probe that verifies a new agent CLI can be driven at all.
 - [`herdr`](skills/herdr/) — the official herdr skill, vendored unmodified from [`ogulcancelik/herdr`](https://github.com/ogulcancelik/herdr): the `herdr` CLI reference the other two build on.
 

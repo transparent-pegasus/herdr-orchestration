@@ -1,6 +1,6 @@
 ---
 name: orchestration
-description: "Route every task received directly from the user through the pane that received it (the orchestrator) in herdr unless the user explicitly denies orchestration. Does NOT apply to tasks delegated from another pane — execute those yourself, never re-delegate. Routing comes from the repository's .herdr-orchestration/config.yaml, falling back to the skill's roles.yaml defaults: a role list plus a role and a mode assigned to every delegation task — complex coding, simple coding, chores, verification, planning, and the plan review. That resolved YAML is the source of truth for every route; read it rather than assuming a default. Delegation runs through using-herdr-sibling-panes, and stays inside the orchestrator's own tab unless the configuration widens the scope. Every task is reassignable and the review is togglable; any assignment the repo changed and any disabled review is named in the final report. Roles bind to agent types, not reserved panes — any idle pane of the right type can take any task, a role bound to a list of agent types runs one delegation per entry, and an exhausted agent is replaced by its substitute from the fallbacks map."
+description: "Route every task received directly from the user through the pane that received it (the orchestrator) in herdr unless the user explicitly denies orchestration. Does NOT apply to tasks delegated from another pane — execute those yourself, never re-delegate. Routing comes from the repository's .herdr-orchestration/config.yaml, falling back to the skill's roles.yaml defaults: a role list plus a role and a mode assigned to every delegation task — complex coding, simple coding, chores, verification, planning, and the plan and integration reviews. That resolved YAML is the source of truth for every route; read it rather than assuming a default. Delegation runs through using-herdr-sibling-panes, and stays inside the orchestrator's own tab unless the configuration widens the scope. Every task is reassignable and every review individually togglable; any assignment the repo changed and any disabled review is named in the final report. Roles bind to agent types, not reserved panes — any idle pane of the right type can take any task, a role bound to a list of agent types runs one delegation per entry, and an exhausted agent is replaced by its substitute from the fallbacks map."
 ---
 
 # Orchestration
@@ -65,7 +65,10 @@ Resolve every task the work will touch before its first delegation, not when you
 
 | Task | Off means |
 |---|---|
-| `plan-double-review` | The plan is acted on unreviewed |
+| `plan-review` | The plan is acted on unreviewed |
+| `integration-review` | A multi-pane implementation is integrated unreviewed |
+
+`integration-review` applies only when implementation was split across more than one pane; with a single implementer there is nothing to gate, and that skip is not a disabled review.
 
 **Every assignment the repo config changed away from `roles.yaml`, every non-default `delegation:` value, and every disabled review, is named in the final report**, next to any role that fell back and any review that degraded for lack of panes. The user configured it; the report says so, every run, so nobody later mistakes an unreviewed plan for a reviewed one.
 
@@ -130,13 +133,19 @@ Examples: renaming a symbol, adding a CRUD endpoint that mirrors an existing one
 
 Default when uncertain: `complex-coding`. With the default assignments a misrouted simple task costs little on the Coder, while a complex task misrouted to the Generalist produces subtle breakage. A repo that assigns both task names to the same role makes this distinction moot — that is a legitimate configuration.
 
-## Plan/design double review
+## Plan/design review
 
-Runs when the `plan-double-review` gate is enabled, under "Roles that bind to a list" above — one review per agent type in the resolved role, with that section's different-types, degrade, and say-which-it-was rules.
+Runs when the `plan-review` gate is enabled, under "Roles that bind to a list" above — one review per agent type in the resolved role, with that section's different-types, degrade, and say-which-it-was rules.
 
 Draft the plan in the orchestrator pane, then run the reviews through `using-herdr-sibling-panes` (one per agent type in the resolved role, in separate panes when the list has multiple entries), wait for all of them to complete, compare the findings, resolve disagreements, and only then act or report. Reviewers are reviewers, not substitutes for the orchestrator's final judgment.
 
 Two specifics beyond the general rules: each review is a reset-backed delegation (the drafting session's reasoning is not in the reviewer's context), and if no listed agent type is available at all, the orchestrator critically reviews its own plan and states that no independent review happened.
+
+## Integration review
+
+Runs when the `integration-review` gate is enabled **and** implementation was split across more than one pane — the seams between independently produced pieces are what it checks. With a single implementer the gate does not run, and that is not a disabled review.
+
+After integrating the pieces, delegate a review of the integrated result the same way as the plan/design review: under "Roles that bind to a list", with the same two specifics (reset-backed delegations; no available type means the orchestrator critically reviews the integration itself and says no independent review happened). Compare findings, resolve disagreements, and only then report.
 
 ## Exhaustion and fallback
 

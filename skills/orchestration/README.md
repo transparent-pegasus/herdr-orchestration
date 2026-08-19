@@ -4,7 +4,7 @@ Agent skill that routes every task received directly from the user through the p
 
 ## Files
 
-- [`SKILL.md`](SKILL.md) — the skill: configuration resolution, delegation scope, the routing table, the complex-coding boundary, double-review flow, exhaustion/fallback, and the delegation contract.
+- [`SKILL.md`](SKILL.md) — the skill: configuration resolution, delegation scope, the routing table, the complex-coding boundary, the review gates, exhaustion/fallback, and the delegation contract.
 - [`roles.yaml`](roles.yaml) — shipped defaults: the role list, the `fallbacks:` map of substitutes for exhausted agents, `delegation.pane_scope`, and the `assignments:` routing table.
 - [`agents/openai.yaml`](agents/openai.yaml) — interface metadata for OpenAI-compatible agent runners.
 
@@ -12,7 +12,7 @@ Agent skill that routes every task received directly from the user through the p
 
 `roles.yaml` holds the defaults. A repository overrides any key of it in its own `.herdr-orchestration/config.yaml`, which wins key by key — that file is the place to customize, because a plugin install is read-only in practice and an update clobbers edits to `roles.yaml`.
 
-Every delegation task (`complex-coding`, `simple-coding`, `chores`, `verification`, `plan-and-design`) carries a `role` and a `mode` (`delegate`, or `orchestrator` to keep it in the orchestrator's own pane). The `plan-double-review` gate additionally carries `enabled`, and turning it off means the plan is acted on unreviewed — which the final report says.
+Every delegation task (`complex-coding`, `simple-coding`, `chores`, `verification`, `plan-and-design`) carries a `role` and a `mode` (`delegate`, or `orchestrator` to keep it in the orchestrator's own pane). The review gates (`plan-review`, `integration-review`) additionally carry `enabled`, and turning one off means that step goes unreviewed — which the final report says. `integration-review` runs only when implementation was split across multiple panes.
 
 ## Key properties
 
