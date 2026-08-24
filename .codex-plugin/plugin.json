@@ -1,6 +1,6 @@
 {
   "name": "herdr-orchestration",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Multi-pane agent orchestration for herdr. Routes user tasks through the pane that received them, delegates to idle sibling agent panes over a composer-safe transport, and substitutes a fallback agent when one is exhausted.",
   "author": {
     "name": "transparent-pegasus",
