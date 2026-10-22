@@ -23,3 +23,7 @@ Every delegation task (`complex-coding`, `simple-coding`, `chores`, `verificatio
 - Review independence comes from a fresh reset session or, for `mode: orchestrator`, a fresh subagent. If independent review is unavailable or prohibited by the user, the report names the degradation.
 - An exhausted entry (usage limit, or two failed delegations on matching panes) is replaced from the `fallbacks:` map, looking up the full entry before its bare type. Other models remain eligible; an entry with no matching in-scope pane is unavailable, not exhausted. Every fallback is named in the final report.
 - Configuration is input: it is resolved once before the first delegation and never written from inside a run.
+
+## License
+
+[MIT](../../LICENSE).

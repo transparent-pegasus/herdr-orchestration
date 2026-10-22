@@ -2,13 +2,13 @@
 
 Multi-pane agent orchestration for [herdr](https://herdr.dev). Every task that arrives directly from the user is routed through the pane that received it. Who performs each kind of work, and where, comes from a routing table in `roles.yaml`, which a repository overrides key by key in its own `.herdr-orchestration/config.yaml`. The defaults keep planning and routine work in the orchestrator pane and delegate complex coding and independent reviews to sibling panes selected by agent type and model.
 
-Requires `HERDR_ENV=1`. Outside herdr the skills do nothing.
+Requires `HERDR_ENV=1` and an installed herdr CLI that supports `herdr --skill`. The CLI supplies its operating guide at runtime. Outside herdr the skills do nothing; if the guide cannot be loaded, stop herdr operations.
 
 ## Skills
 
 - [`orchestration`](skills/orchestration/) — orchestrator rules, configuration resolution, the routing table, delegation scope, the complex-coding boundary, the plan and integration review gates, the delegation contract, and fallback resolution.
 - [`using-herdr-sibling-panes`](skills/using-herdr-sibling-panes/) — the delegation transport: composer-safe submission, model checks, the completion-marker task contract, failure handling, and a probe that verifies a new agent CLI can be driven at all.
-- [`herdr`](skills/herdr/) — the official herdr v0.9.4 skill, vendored unmodified from [`herdrdev/herdr`](https://github.com/herdrdev/herdr): the `herdr` CLI reference the other two build on.
+- [`herdr`](skills/herdr/) — a thin bootstrap that loads the complete operating guide from the installed CLI with `herdr --skill`. The plugin bundles no upstream herdr guide or implementation.
 
 ## Install
 
@@ -60,12 +60,16 @@ The imported checks were verified in herdrpowers on 2026-10-09 against herdr 0.9
 ```bash
 bash tests/pane-model/run.sh
 python3 -B -m unittest discover -s tests/composer-submit -v
+python3 -B -m unittest discover -s tests/herdr-guide -v
 ```
 
 The [2026-10-21 sync record](docs/2026-10-21-orchestration-sync.md) lists imported and excluded changes from herdrpowers, their sources, and validation.
 
+The [2026-10-22 release record](docs/2026-10-22-installed-herdr-guide-and-mit.md) records the CLI-supplied guide, tracked-file audit, and MIT release.
+
 ## License
 
-Apache License 2.0, matching upstream herdr. See [`LICENSE`](LICENSE).
+MIT. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
 
-`skills/herdr/SKILL.md` is copyright its herdr authors and is vendored unmodified under the same license; everything else is copyright the herdr-orchestration authors.
+Herdr is an external runtime dependency and supplies its own guide at runtime.
+This distribution includes no upstream herdr skill, README, or implementation.

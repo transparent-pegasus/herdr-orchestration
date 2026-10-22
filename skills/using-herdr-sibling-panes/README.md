@@ -23,3 +23,7 @@ Agent skill for delegating work from an orchestrator pane to idle sibling agent 
 - Delegated panes write their reports to files, because terminal scrollback is lossy, and are forbidden from `git checkout`/`restore`/`stash`/`clean`/`reset` — sibling edits may be in flight.
 - A model-pinned `agent@model` entry selects only panes whose footer matches (`pane-model.sh`). The helper checks before any key and after the reset; a mismatch exits `5` without submitting the instruction.
 - An entry is exhausted after a usage-limit message, or two markerless delegations on two matching panes; the orchestration skill then substitutes from its `fallbacks:` map. Helper exits `2`, `4`, and `5` never started a delegation and never count toward that.
+
+## License
+
+[MIT](../../LICENSE).

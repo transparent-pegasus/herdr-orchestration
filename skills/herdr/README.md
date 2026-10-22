@@ -1,18 +1,33 @@
 # herdr
 
-The official [herdr](https://github.com/herdrdev/herdr) v0.9.4 agent skill, vendored here so the orchestration skills ship with the CLI reference they build on. Teaches an agent to inspect and control the herdr session it runs inside: workspaces, tabs, panes, agents, commands, output reads, lifecycle waits, and saved-machine targeting.
+A thin bootstrap for the operating guide embedded in the installed herdr CLI.
+The skill requires `HERDR_ENV=1`, prints the guide with `herdr --skill`, and
+instructs the agent to read its complete output before operating the session.
+The plugin does not bundle herdr's upstream skill, README, or implementation.
 
 ## Files
 
-- [`SKILL.md`](SKILL.md) — the skill: `HERDR_ENV` gate, CLI discovery, pane/agent primitives, ID handling, machine selection, starting and prompting agents, running ordinary commands in a pane, read sources, and the safety rules.
+- [`SKILL.md`](SKILL.md) — the bootstrap, using the method in herdrpowers `7253d0f`.
 - [`agents/openai.yaml`](agents/openai.yaml) — Codex interface metadata.
+
+## Requirements
+
+Install herdr separately, with support for `--skill`. Outside a herdr session,
+or if the CLI cannot supply its guide, stop herdr operations and report the
+missing prerequisite. Do not download a guide or substitute a repository copy.
+Loading the guide needs no network access or separate skill installation.
 
 ## Relationship to the other skills
 
-- [`orchestration`](../orchestration/) decides *who* does a task.
-- [`using-herdr-sibling-panes`](../using-herdr-sibling-panes/) is the delegation transport for agent composers that `herdr agent prompt` cannot drive reliably.
-- This skill is the general herdr CLI reference underneath both.
+- [`orchestration`](../orchestration/) decides who performs each task.
+- [`using-herdr-sibling-panes`](../using-herdr-sibling-panes/) governs delegation
+  and composer submission.
+- The CLI-supplied guide provides general session-operation instructions;
+  the routing and transport rules above still apply.
 
-## Upstream
+## License
 
-Vendored from `herdrdev/herdr` v0.9.4 at tag commit `7e26bad`, unmodified, via the committed herdrpowers update `cf82b3b` (2026-10-14), which is an ancestor of `7253d0f`. Licensed under Apache License 2.0; see the repository [`LICENSE`](../../LICENSE). Re-sync by copying `SKILL.md` from the upstream repository root. This repository keeps its existing bundled guide; the later herdrpowers switch to loading `herdr --skill` is excluded from this sync.
+This bootstrap is distributed under the [MIT License](../../LICENSE).
+The separately installed herdr runtime supplies its own guide under its own
+terms. See the [release record](../../docs/2026-10-22-installed-herdr-guide-and-mit.md)
+for the removal of the former bundled guide.

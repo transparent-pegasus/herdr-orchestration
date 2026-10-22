@@ -1,5 +1,10 @@
 # Orchestration sync from herdrpowers
 
+Historical record for v0.7.0 (`5d256b3`). The bundled guide and Apache-2.0
+distribution described here were replaced in v0.8.0; see the
+[2026-10-22 release record](2026-10-22-installed-herdr-guide-and-mit.md).
+This record contains no upstream guide excerpts or embedded diffs.
+
 This update selects orchestration changes from the committed herdrpowers
 `main` / `origin/main` at `7253d0feec290f20765a593ea9684c90ea2dd7d1`.
 The source working tree, including its uncommitted upstream v7.0.0 refresh,

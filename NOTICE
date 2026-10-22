@@ -1,0 +1,15 @@
+herdr-orchestration
+Copyright (c) 2026 transparent-pegasus
+
+This distribution is licensed under the MIT License; see LICENSE. Its
+copyright lines match herdrpowers at commit 7253d0f.
+
+The orchestration and delegation skills originated in this repository and
+include updates from herdrpowers, Copyright (c) 2026 transparent-pegasus,
+distributed there under MIT at commit 7253d0f. The herdr guide bootstrap uses
+the same method as that commit. No Superpowers skills or source are included.
+
+Herdr is an external runtime dependency. Its upstream skill, README, and
+implementation are not bundled. The installed CLI supplies its own guide
+with herdr --skill. This change applies to the current distribution; earlier
+snapshots that bundled Herdr material keep their original Apache-2.0 terms.

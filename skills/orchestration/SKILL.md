@@ -114,6 +114,8 @@ Apply this skill only when the task came directly from the user. Whichever pane 
 
 **No re-delegation.** If your task arrived as a delegated instruction from another pane (not from the user), this skill does not apply: execute the task yourself in your own pane and never delegate it onward, even if it looks routine. Re-delegation creates cascades where multiple panes contend for the same siblings and no one does the work.
 
+Before inspecting or controlling the session, follow [`herdr`](../herdr/SKILL.md) to load the installed CLI's complete guide with `herdr --skill`. Stop herdr operations if its environment check or guide loading fails.
+
 Use `using-herdr-sibling-panes` for every delegation. Submit through its bundled `composer-submit.sh` and wait for the delegated result before integrating it. Do not use `pane run` for agent-pane prompts.
 
 ## Task routing
