@@ -1,0 +1,37 @@
+{
+  "name": "herdr-orchestration",
+  "version": "0.8.0",
+  "description": "Multi-pane agent orchestration for herdr. Routes user tasks through the pane that received them, delegates to idle sibling agent panes over a composer-safe transport, and substitutes a fallback agent when one is exhausted.",
+  "author": {
+    "name": "transparent-pegasus",
+    "url": "https://github.com/transparent-pegasus"
+  },
+  "homepage": "https://github.com/transparent-pegasus/herdr-orchestration",
+  "repository": "https://github.com/transparent-pegasus/herdr-orchestration",
+  "license": "MIT",
+  "keywords": [
+    "herdr",
+    "orchestration",
+    "delegation",
+    "multi-agent",
+    "tui",
+    "opencode"
+  ],
+  "main": ".opencode-plugin/index.mjs",
+  "exports": {
+    ".": "./.opencode-plugin/index.mjs"
+  },
+  "files": [
+    "index.mjs",
+    ".opencode-plugin/",
+    "skills/",
+    "NOTICE"
+  ],
+  "scripts": {
+    "test": "node --test tests/opencode-plugin/*.test.mjs"
+  },
+  "dependencies": {
+    "@opencode/plugin": "^2.0.32",
+    "yaml": "^2.9.1"
+  }
+}

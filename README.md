@@ -32,6 +32,33 @@ Cursor:
 cursor-agent plugin marketplace add https://github.com/transparent-pegasus/herdr-orchestration
 ```
 
+OpenCode 2 (`opencode2`):
+
+Clone the repository and install its dependencies:
+
+```bash
+git clone https://github.com/transparent-pegasus/herdr-orchestration.git
+cd herdr-orchestration
+npm ci
+```
+
+Add the clone's **absolute directory path** to `plugins` in your project's
+`opencode.jsonc` or `~/.config/opencode/opencode.jsonc`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["/absolute/path/to/herdr-orchestration"]
+}
+```
+
+Restart OpenCode 2. The plugin registers all three skills with their original
+file paths, so relative references to `roles.yaml` and the transport scripts
+resolve inside the installation. Existing skills with the same ID take
+precedence. This uses the [OpenCode 2 plugin API](https://opencode.ai/v2/docs/build/plugins)
+(`setup` and `ctx.skill.transform`) and the plural `plugins` setting; it requires
+OpenCode 2.0.32 or later.
+
 ## Layout
 
 ```
@@ -39,6 +66,9 @@ cursor-agent plugin marketplace add https://github.com/transparent-pegasus/herdr
 .claude-plugin/     plugin.json + marketplace.json  (Claude Code)
 .codex-plugin/      plugin.json with interface block (Codex)
 .cursor-plugin/     plugin.json + marketplace.json  (Cursor)
+.opencode-plugin/   index.mjs                       (OpenCode 2)
+index.mjs                                          OpenCode 2 local-directory entrypoint
+package.json + package-lock.json                   OpenCode package and dependencies
 skills/<name>/SKILL.md              the skill itself
 skills/<name>/agents/openai.yaml    Codex interface metadata, per skill
 ```
@@ -61,6 +91,8 @@ The imported checks were verified in herdrpowers on 2026-10-09 against herdr 0.9
 bash tests/pane-model/run.sh
 python3 -B -m unittest discover -s tests/composer-submit -v
 python3 -B -m unittest discover -s tests/herdr-guide -v
+npm ci
+npm test
 ```
 
 The [2026-10-21 sync record](docs/2026-10-21-orchestration-sync.md) lists imported and excluded changes from herdrpowers, their sources, and validation.
