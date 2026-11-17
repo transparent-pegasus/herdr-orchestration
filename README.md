@@ -82,7 +82,7 @@ Composer key bindings differ per CLI and change across releases. `ctrl+c` quits 
 ```bash
 bash skills/using-herdr-sibling-panes/scripts/probe-composer.sh "$PANE"
 # For a model-pinned role entry, also pass the model:
-bash skills/using-herdr-sibling-panes/scripts/probe-composer.sh "$PANE" "GPT-6.1 Sol"
+bash skills/using-herdr-sibling-panes/scripts/probe-composer.sh "$PANE" "GPT-6.2 Sol"
 ```
 
 The imported checks were verified in herdrpowers on 2026-10-09 against herdr 0.9.3, including OpenCode 1.18.35. See the transport skill for the per-CLI results and the Grok status-detection limitation. This repository's offline checks do not operate live panes:
