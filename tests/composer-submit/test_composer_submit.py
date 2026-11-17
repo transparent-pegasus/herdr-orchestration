@@ -106,8 +106,8 @@ class ComposerSubmitTest(unittest.TestCase):
         self.assertFalse(self.state()["zoomed"])
 
     def test_opencode_uses_new_session_keys(self):
-        self.configure(agent="opencode", model="GPT-6.1 Sol")
-        self.invoke("w1:p2", INSTRUCTION, "GPT-6.1 Sol")
+        self.configure(agent="opencode", model="GPT-6.2 Sol")
+        self.invoke("w1:p2", INSTRUCTION, "GPT-6.2 Sol")
         keys = [call[3] for call in self.input_calls() if call[1] == "send-keys"]
         self.assertEqual(keys[:2], ["ctrl+x", "n"])
         self.assertNotIn(["pane", "send-text", "w1:p2", "/clear"], self.input_calls())
@@ -154,8 +154,8 @@ class ComposerSubmitTest(unittest.TestCase):
         self.assertEqual(self.state()["submissions"], [INSTRUCTION])
 
     def test_opencode_probe_checks_reset_wait_model_and_double_escape(self):
-        self.configure(agent="opencode", model="GPT-6.1 Sol")
-        result = self.invoke("w1:p2", "GPT-6.1 Sol", script="probe-composer.sh")
+        self.configure(agent="opencode", model="GPT-6.2 Sol")
+        result = self.invoke("w1:p2", "GPT-6.2 Sol", script="probe-composer.sh")
         self.assertEqual(result.stdout.count("PASS  "), 12, result.stdout)
         self.assertIn("9 esc esc interrupted", result.stdout)
         waits = [call for call in self.state()["calls"] if call[1] == "wait-output"]
@@ -165,8 +165,8 @@ class ComposerSubmitTest(unittest.TestCase):
                             and call[-1] == "60"))
 
     def test_probe_detects_reset_that_kept_the_conversation(self):
-        self.configure(agent="opencode", model="GPT-6.1 Sol", ignore_resets=True)
-        result = self.invoke("w1:p2", "GPT-6.1 Sol", script="probe-composer.sh", expected=1)
+        self.configure(agent="opencode", model="GPT-6.2 Sol", ignore_resets=True)
+        result = self.invoke("w1:p2", "GPT-6.2 Sol", script="probe-composer.sh", expected=1)
         self.assertIn("FAIL  8 the reset did not start a fresh conversation", result.stdout)
 
 

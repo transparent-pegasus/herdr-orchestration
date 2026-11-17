@@ -34,13 +34,13 @@ roles:
       Independent review — plans, designs, and implemented code. Bound to a
       list, so every task assigned to this role runs once per listed entry.
     agents: # one independent review per entry
-      - opencode@GPT-6 Astra
+      - opencode@GPT-6.2 Astra
       - cursor@Gemini 4 Argon
       - cursor@Grok 4.7
       - cursor@Muse Spark 1.3
   coder:
     description: Complex coding (see "Complex coding boundary" in SKILL.md)
-    agent: opencode@GPT-6.1 Sol
+    agent: opencode@GPT-6.2 Sol
   generalist:
     description: Simple coding, search, file inspection, tests, lint, routine operations
     agent: orchestrator
@@ -53,8 +53,8 @@ roles:
 # A pinned entry is looked up as written, then by its bare type.
 # An agent with no entry here has no substitute.
 fallbacks:
-  opencode@GPT-6 Astra: [codex@GPT-6-Astra, codex]
-  opencode@GPT-6.1 Sol: [codex@GPT-6.1-Sol, codex]
+  opencode@GPT-6.2 Astra: [codex@GPT-6.2-Astra, codex]
+  opencode@GPT-6.2 Sol: [codex@GPT-6.2-Sol, codex]
   cursor@Gemini 4 Argon: [agy@Gemini 4 Argon, agy]
   cursor@Grok 4.7: [grok@Grok 4.7, grok]
   cursor@Muse Spark 1.3: [muse@Muse Spark 1.3, muse]
