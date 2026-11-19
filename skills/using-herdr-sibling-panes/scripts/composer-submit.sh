@@ -3,38 +3,45 @@ set -euo pipefail
 
 # Reset an agent pane's session and submit exactly one instruction to it.
 #
-# usage: composer-submit.sh <pane-id> <instruction> [<model>]
+# usage: composer-submit.sh <pane-id> <instruction> [<model> [<effort>]]
 #
-# With <model> (the model half of an `agent@model` entry), the pane's footer
-# model line must contain it before any key is sent and again after the reset;
-# see pane-model.sh.
+# With <model>, the pane's footer must contain it before any key is sent and
+# again after the reset. With <effort>, the same footer must also show that
+# exact semantic effort; see pane-model.sh. Effort requires a model.
 #
 # exit 0  instruction submitted and the pane started working
 # exit 2  bad usage (including an instruction holding a bare "/word" slash
-#         trigger), or the pane is not a usable idle agent pane
+#         trigger), or the pane is not a usable idle agent pane — including an
+#         agent that left the foreground during the reset or before an Enter;
+#         no instruction was submitted
 # exit 3  instruction did not submit (composer key sequence is wrong for this
 #         agent CLI, or the pane stopped responding) — before retrying, check
 #         whether the task already finished by matching its completion marker
 # exit 4  pane is too narrow even after a zoom attempt
-# exit 5  the pane's model line does not contain <model>: before the reset
-#         nothing was sent; after it, the session was reset but no
-#         instruction was sent
+# exit 5  the pane's footer does not verify the requested model/effort: before the reset
+#         no key was sent (a zoom taken for the width floor is restored); after
+#         it, the session was reset but no instruction was sent
 
-if [[ $# -lt 2 || $# -gt 3 ]]; then
-  echo "usage: composer-submit.sh <pane-id> <instruction> [<model>]" >&2
+if [[ $# -lt 2 || $# -gt 4 ]]; then
+  echo "usage: composer-submit.sh <pane-id> <instruction> [<model> [<effort>]]" >&2
   exit 2
 fi
 
 pane_id=$1
 instruction=$2
 model=${3-}
-if [[ $# -eq 3 && ( -z $model || $model == *$'\n'* ) ]]; then
+effort=${4-}
+if [[ $# -ge 3 && ( -z ${model//[[:space:]]/} || $model == *$'\n'* || $model == *$'\r'* ) ]]; then
   echo "model must be one non-empty line" >&2
+  exit 2
+fi
+if [[ $# -eq 4 && ( -z ${effort//[[:space:]]/} || $effort == *$'\n'* || $effort == *$'\r'* ) ]]; then
+  echo "effort must be one non-empty line and requires a model" >&2
   exit 2
 fi
 pane_model=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/pane-model.sh
 input_settle_seconds=${HERDR_COMPOSER_INPUT_SETTLE_SECONDS:-0.40}
-clear_settle_seconds=${HERDR_COMPOSER_CLEAR_SETTLE_SECONDS:-1.20}
+clear_settle_seconds=${HERDR_COMPOSER_CLEAR_SETTLE_SECONDS-}
 confirm_timeout_seconds=${HERDR_COMPOSER_CONFIRM_TIMEOUT_SECONDS:-10}
 composer_min_cols=${HERDR_COMPOSER_MIN_COLS:-40}
 
@@ -78,16 +85,54 @@ pane_field() {
     python3 -c "import sys,json;p=json.load(sys.stdin)['result']['pane'];print(p.get('$1',''))"
 }
 
-# Prints "<foreground pid> <shell pid>". They are equal only when the pane is
-# sitting at its own shell prompt — the agent TUI exited and nothing replaced
-# it. herdr's `agent` field can still name the dead agent at that point, so
-# this is the check that matters before any text is sent.
-foreground_pids() {
+# Prints "<foreground pid> <shell pid> <foreground process group>". The first
+# two are equal only when the pane is sitting at its own shell prompt — the
+# agent TUI exited and nothing replaced it. herdr's `agent` field can still
+# name the dead agent at that point, so this is the check that matters before
+# any text is sent.
+foreground_ids() {
   herdr pane process-info --pane "$pane_id" 2>/dev/null |
     python3 -c 'import sys,json
 d=json.load(sys.stdin)["result"]["process_info"]
-f=d["foreground_processes"]
-print(f[0].get("pid","") if f else "", d.get("shell_pid",""))'
+f=d.get("foreground_processes") or []
+print((f[0].get("pid") if f else None) or "-", d.get("shell_pid") or "-", d.get("foreground_process_group_id") or "-")'
+}
+
+at_shell() {
+  local fg shell
+  read -r fg shell _ <<<"$(foreground_ids)"
+  [[ $fg =~ ^[0-9]+$ && $fg == "$shell" ]]
+}
+
+# The agent checked idle below still holds the terminal. An agent that exits
+# drops the pane to its shell, which then receives every later key. Compare
+# the foreground process group, not the first listed pid: a reset restarts the
+# agent's helper processes (MCP servers, hooks), and a reading taken mid-change
+# is retried before it counts. Only the shell holding the terminal is final.
+agent_alive() {
+  local try fg shell group
+  for try in 1 2 3; do
+    ((try == 1)) || sleep 0.2
+    read -r fg shell group <<<"$(foreground_ids)"
+    [[ $fg =~ ^[0-9]+$ ]] || continue
+    [[ $fg != "$shell" ]] || return 1
+    [[ $group != "$pgid" ]] || return 0
+  done
+  return 1
+}
+
+# Stop before anything else reaches the pane. When the shell has the
+# foreground, ctrl+c discards what already landed on its command line, so a
+# later Enter in that pane cannot run it. Not ctrl+u: right after the esc the
+# helper sends, zsh and bash read esc + ctrl+u as one meta key and keep the line.
+agent_gone() {
+  if at_shell; then
+    herdr pane send-keys "$pane_id" ctrl+c >/dev/null || true
+  fi
+  echo "pane $pane_id: $agent (pid $pid) left the foreground $1. ${2:-No instruction was submitted.}" >&2
+  echo "The agent exited: restart it in that pane before retrying." >&2
+  herdr pane read "$pane_id" --source recent --lines 40 >&2 || true
+  exit 2
 }
 
 tty_cols() {
@@ -121,11 +166,20 @@ if [[ $status != idle && $status != done ]]; then
   exit 2
 fi
 
-model_matches() { bash "$pane_model" "$pane_id" "$model" >/dev/null; }
-if [[ -n $model ]] && ! model_matches; then
-  echo "pane $pane_id is not running '$model'; nothing was sent" >&2
-  exit 5
+# Muse Code 1.4.15 can exit about two seconds after /clear on a session that
+# did substantial work ("source session ... is still live; teardown must
+# precede construct"), so its reset is watched past that point.
+if [[ -z $clear_settle_seconds ]]; then
+  if [[ $agent == muse ]]; then clear_settle_seconds=5; else clear_settle_seconds=1.20; fi
 fi
+
+model_matches() {
+  local target=("$pane_id" "$model")
+  [[ -z $effort ]] || target+=("$effort")
+  bash "$pane_model" "${target[@]}" >/dev/null
+}
+requested_target=$model
+[[ -z $effort ]] || requested_target+=" (effort: $effort)"
 
 # herdr's zoom is one slot per tab. Two submissions into the same tab would
 # trade that slot back and forth: the second one's `zoom --on` moves the zoom
@@ -135,18 +189,22 @@ if command -v flock >/dev/null 2>&1 && lock_tab=$(pane_field tab_id) && [[ -n $l
   exec 9>"${TMPDIR:-/tmp}/herdr-composer-${lock_tab//[^A-Za-z0-9]/_}.lock" && flock 9
 fi
 
-if ! pids=$(foreground_pids) || [[ ! ${pids%% *} =~ ^[0-9]+$ ]]; then
+read -r pid shell_pid pgid <<<"$(foreground_ids)"
+if [[ ! $pid =~ ^[0-9]+$ ]]; then
   echo "pane $pane_id has no foreground process; cannot measure composer width" >&2
   exit 2
 fi
-pid=${pids%% *}
-if [[ $pid == "${pids##* }" ]]; then
+# The group leader is the job the shell started, so its stdin is the terminal;
+# a helper process listed first may hold only pipes.
+tty_pid=$pid
+[[ ! $pgid =~ ^[0-9]+$ ]] || tty_pid=$pgid
+if [[ $pid == "$shell_pid" ]]; then
   echo "pane $pane_id is at a shell prompt — foreground pid $pid is the pane's own shell, so its agent has exited" >&2
   echo "(herdr may still report agent '$agent'). Text sent here would land on the command line and Enter would" >&2
   echo "execute it, including anything the previous occupant left on the prompt. Restart the agent, then retry." >&2
   exit 2
 fi
-if ! cols=$(tty_cols "$pid") || [[ ! $cols =~ ^[0-9]+$ ]]; then
+if ! cols=$(tty_cols "$tty_pid") || [[ ! $cols =~ ^[0-9]+$ ]]; then
   echo "pane $pane_id foreground pid $pid has no readable terminal width" >&2
   exit 2
 fi
@@ -199,7 +257,7 @@ if ((cols < composer_min_cols)); then
   fi
   zoom_taken=1
   sleep "$input_settle_seconds"
-  if ! zoomed_cols=$(tty_cols "$pid") || [[ ! $zoomed_cols =~ ^[0-9]+$ ]]; then
+  if ! zoomed_cols=$(tty_cols "$tty_pid") || [[ ! $zoomed_cols =~ ^[0-9]+$ ]]; then
     echo "pane $pane_id was too narrow ($prezoom_cols cols, floor $composer_min_cols) and its width could not be re-read after zoom" >&2
     exit 4
   fi
@@ -210,12 +268,28 @@ if ((cols < composer_min_cols)); then
   fi
 fi
 
+# Verify the requested model/effort before any key reaches the agent. This
+# follows the width step on purpose: a narrow pane may not draw its footer at
+# all (opencode drops its model line at about 30 columns), and a zoom just
+# taken needs time to redraw.
+if [[ -n $model ]]; then
+  deadline=$((SECONDS + confirm_timeout_seconds))
+  while ! model_matches 2>/dev/null; do
+    if ((!zoom_taken || SECONDS >= deadline)); then
+      model_matches || true
+      echo "pane $pane_id is not running '$requested_target'; nothing was sent" >&2
+      exit 5
+    fi
+    sleep 0.5
+  done
+fi
+
 ensure_zoom_width() {
   local current_cols
   if ((!zoom_taken)); then
     return 0
   fi
-  if ! current_cols=$(tty_cols "$pid") || [[ ! $current_cols =~ ^[0-9]+$ ]]; then
+  if ! current_cols=$(tty_cols "$tty_pid") || [[ ! $current_cols =~ ^[0-9]+$ ]]; then
     echo "pane $pane_id width could not be re-read before Enter while zoom-managed" >&2
     exit 4
   fi
@@ -239,6 +313,8 @@ submit_line() {
   # esc dismisses the slash/mention popup that would otherwise eat the Enter.
   herdr pane send-keys "$pane_id" esc
   sleep "$input_settle_seconds"
+  # In a shell, Enter would run the line: send it only while the agent holds the pane.
+  agent_alive || agent_gone "before Enter"
   ensure_zoom_width
   herdr pane send-keys "$pane_id" enter
 }
@@ -264,7 +340,13 @@ if [[ $agent == opencode ]]; then
 else
   submit_line "/clear"
 fi
-sleep "$clear_settle_seconds"
+# Settle while watching the agent: a reset can end the CLI, and the
+# instruction must never be typed into the shell it leaves behind.
+settle_polls=$(awk -v s="$clear_settle_seconds" 'BEGIN { print int(s / 0.2 + 0.5) }')
+for ((poll = 0; poll <= settle_polls; poll++)); do
+  ((poll == 0)) || sleep 0.2
+  agent_alive || agent_gone "after the session reset"
+done
 
 # A reset redraws the screen, so give the footer time to come back.
 if [[ -n $model ]]; then
@@ -272,7 +354,7 @@ if [[ -n $model ]]; then
   until model_matches 2>/dev/null; do
     if ((SECONDS >= deadline)); then
       model_matches || true
-      echo "pane $pane_id is not running '$model' after the reset; the session was reset and no instruction was sent" >&2
+      echo "pane $pane_id is not running '$requested_target' after the reset; the session was reset and no instruction was sent" >&2
       exit 5
     fi
     sleep 0.5
@@ -287,6 +369,7 @@ if ! started; then
   # re-send the text — that concatenates onto whatever is already there.
   herdr pane send-keys "$pane_id" esc
   sleep "$input_settle_seconds"
+  agent_alive || agent_gone "before the retry Enter" "The first Enter may already have submitted the instruction."
   ensure_zoom_width
   herdr pane send-keys "$pane_id" enter
   if ! started; then

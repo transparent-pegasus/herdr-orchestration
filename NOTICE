@@ -6,8 +6,10 @@ copyright lines match herdrpowers at commit 7253d0f.
 
 The orchestration and delegation skills originated in this repository and
 include updates from herdrpowers, Copyright (c) 2026 transparent-pegasus,
-distributed there under MIT at commit 7253d0f. The herdr guide bootstrap uses
-the same method as that commit. No Superpowers skills or source are included.
+distributed there under MIT at commit 7253d0f and, most recently, 1921c31:
+its composition profiles, decision-maker brief, agent lifecycle helper, and
+their tests. The herdr guide bootstrap uses the same method as 7253d0f. No
+Superpowers skills or source are included.
 
 Herdr is an external runtime dependency. Its upstream skill, README, and
 implementation are not bundled. The installed CLI supplies its own guide

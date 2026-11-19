@@ -146,6 +146,21 @@ class ComposerSubmitTest(unittest.TestCase):
         self.assertFalse(self.state()["zoomed"])
         self.assertEqual(self.input_calls(), [])
 
+    def test_narrow_pane_footer_is_verified_after_zoom(self):
+        self.configure(agent="opencode", model="GPT-6.2 Sol", initial_cols=30,
+                       footer_needs_zoom=True)
+        self.invoke("w1:p2", INSTRUCTION, "GPT-6.2 Sol")
+        self.assertEqual(self.state()["submissions"], [INSTRUCTION])
+        self.assertFalse(self.state()["zoomed"])
+
+    def test_narrow_pane_with_another_model_restores_zoom_without_input(self):
+        self.configure(agent="opencode", model="GPT-6.2 Astra", initial_cols=30,
+                       footer_needs_zoom=True)
+        self.invoke("w1:p2", INSTRUCTION, "GPT-6.2 Sol", expected=5)
+        self.assertEqual(self.input_calls(), [])
+        self.assertFalse(self.state()["zoomed"])
+        self.assertIn(["pane", "zoom", "w1:p2", "--on"], self.state()["calls"])
+
     def test_existing_zoom_on_another_pane_is_restored(self):
         self.configure(initial_cols=20, zoomed=True, zoom_pane="w1:p3")
         self.invoke("w1:p2", INSTRUCTION)

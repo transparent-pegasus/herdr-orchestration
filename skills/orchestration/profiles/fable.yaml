@@ -1,0 +1,19 @@
+orchestrator:
+  claude:
+    model: Fable 5.2
+    effort: max
+roles:
+  planning-design: orchestrator
+  decision-maker: orchestrator
+  coder: any
+  reviewers:
+    - codex:
+        model: GPT-6.2-Astra
+        effort: max
+    - agy:
+        model: Gemini 4 Neon
+        effort: XHigh
+  generalist:
+    agy:
+      effort: XHigh
+      model: Gemini 4 Hydrogen

@@ -1,0 +1,10 @@
+  Muse Code 1.4.14
+
+  Earlier transcript quoted the requested profile:
+  muse-wonder-1.0 · max · /tmp/muse-fixture-pBoS7Z · Auto-review
+  That transcript is not the current footer.
+
+────────────────────────────────────────────────────────────────────────────────
+❯ Please use muse-wonder-1.0 · max for the next task.
+────────────────────────────────────────────────────────────────────────────────
+  muse-wonder-1.0 · high · /tmp/muse-fixture-pBoS7Z · Auto-review

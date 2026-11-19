@@ -1,6 +1,6 @@
 {
   "name": "herdr-orchestration",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Multi-pane agent orchestration for herdr. Routes user tasks through the pane that received them, delegates to idle sibling agent panes over a composer-safe transport, and substitutes a fallback agent when one is exhausted.",
   "author": {
     "name": "transparent-pegasus",
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "Herdr Orchestration",
     "shortDescription": "Herdr multi-pane orchestration and delegation",
-    "longDescription": "Route user tasks through configured herdr roles, select sibling panes by agent type and model for delegated work and independent reviews, and substitute a fallback when an entry is unavailable or exhausted.",
+    "longDescription": "Route user tasks through configured herdr roles and composition profiles, select sibling panes by agent type, model, and effort for delegated work and independent reviews, and substitute a fallback when an entry is exhausted, or a subagent of the orchestrator's own kind when its pane is not open.",
     "developerName": "transparent-pegasus",
     "category": "Productivity",
     "capabilities": [

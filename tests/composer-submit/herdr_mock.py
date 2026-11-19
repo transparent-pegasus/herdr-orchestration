@@ -59,6 +59,7 @@ elif args[:2] == ["pane", "process-info"]:
     result = {"process_info": {
         "shell_pid": state["pid"] if state.get("shell_prompt") else state["pid"] + 1,
         "foreground_processes": [{"pid": state["pid"], "cmdline": "offline-fixture"}],
+        "foreground_process_group_id": state["pid"],
     }}
 elif args[:2] == ["pane", "layout"]:
     result = {"layout": {"zoomed": state["zoomed"],
@@ -97,6 +98,9 @@ elif args[:2] == ["pane", "send-keys"]:
 elif args[:2] == ["pane", "read"]:
     if args[args.index("--source") + 1] == "visible":
         kind, model = state["agent"], state["model"]
+        # opencode draws no model line in a narrow pane until it is widened.
+        if state.get("footer_needs_zoom") and not state["zoomed"]:
+            model = ""
         screen = {"cursor": f"→ Add a follow-up\n────\n{model}",
                   "codex": f"› Follow up\n\n{model}",
                   "opencode": f"┃\n┃ Build · {model} OpenAI · max"}

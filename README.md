@@ -1,13 +1,13 @@
 # herdr-orchestration
 
-Multi-pane agent orchestration for [herdr](https://herdr.dev). Every task that arrives directly from the user is routed through the pane that received it. Who performs each kind of work, and where, comes from a routing table in `roles.yaml`, which a repository overrides key by key in its own `.herdr-orchestration/config.yaml`. The defaults keep planning and routine work in the orchestrator pane and delegate complex coding and independent reviews to sibling panes selected by agent type and model.
+Multi-pane agent orchestration for [herdr](https://herdr.dev). Every task that arrives directly from the user is routed through the pane that received it, or handed to the owner a selected profile names. Who performs each kind of work, and where, comes from a routing table in `roles.yaml`, which a repository overrides key by key in its own `.herdr-orchestration/config.yaml`, and a composition profile overrides again. The defaults keep planning, decisions, and routine work in the orchestrator pane and delegate complex coding and independent reviews to sibling panes selected by agent type, model, and effort; a role whose pane is not open falls back to a fresh subagent of the orchestrator's own kind.
 
 Requires `HERDR_ENV=1` and an installed herdr CLI that supports `herdr --skill`. The CLI supplies its operating guide at runtime. Outside herdr the skills do nothing; if the guide cannot be loaded, stop herdr operations.
 
 ## Skills
 
-- [`orchestration`](skills/orchestration/) — orchestrator rules, configuration resolution, the routing table, delegation scope, the complex-coding boundary, the plan and integration review gates, the delegation contract, and fallback resolution.
-- [`using-herdr-sibling-panes`](skills/using-herdr-sibling-panes/) — the delegation transport: composer-safe submission, model checks, the completion-marker task contract, failure handling, and a probe that verifies a new agent CLI can be driven at all.
+- [`orchestration`](skills/orchestration/) — orchestrator rules, configuration resolution, composition profiles and owner handoff, the routing table (including `decision-making`), delegation scope, the subagent fallback, the complex-coding boundary, the plan and integration review gates, the delegation contract, and fallback resolution.
+- [`using-herdr-sibling-panes`](skills/using-herdr-sibling-panes/) — the delegation transport: composer-safe submission, model and effort checks against the live footer, the completion-marker task contract, failure handling, the permission-gated agent lifecycle helper, and a probe that verifies a new agent CLI can be driven at all.
 - [`herdr`](skills/herdr/) — a thin bootstrap that loads the complete operating guide from the installed CLI with `herdr --skill`. The plugin bundles no upstream herdr guide or implementation.
 
 ## Install
@@ -59,18 +59,49 @@ precedence. This uses the [OpenCode 2 plugin API](https://opencode.ai/v2/docs/bu
 (`setup` and `ctx.skill.transform`) and the plural `plugins` setting; it requires
 OpenCode 2.0.32 or later.
 
+Antigravity:
+
+```bash
+agy plugin install https://github.com/transparent-pegasus/herdr-orchestration
+```
+
+Run the same command again to update. Antigravity reads `.antigravity-plugin/plugin.json` and loads the three skills from `skills/`. Install rather than `agy plugin import`, which converts a Claude Code copy instead of reading the native manifest.
+
+## Configuration
+
+Everything is optional; `skills/orchestration/roles.yaml` documents every key and its default. A repository's `.herdr-orchestration/config.yaml` might read:
+
+```yaml
+profile: null                  # or fable, neon-fable, solo; a profile's roles replace these bindings
+allow_agent_lifecycle: false   # true lets the orchestrator start and end agents in shell panes
+reviewer_usage_limit: skip     # or wait
+roles:
+  coder:
+    codex:
+      model: GPT-6.2-Sol
+      effort: any              # the orchestrator picks the effort per task
+delegation:
+  pane_scope: tab
+  subagent_fallback: true      # a role whose pane is not open goes to a subagent of the orchestrator's kind
+```
+
+Naming a profile in the task (`run this with solo Opus 5.5 max`) selects it for that run only; a repository's own `.herdr-orchestration/profiles/<name>.yaml` shadows the shipped one. See the [profiles README](skills/orchestration/profiles/README.md) for the shipped presets. The subagent fallback also covers targets whose `fallbacks:` entry is an explicit `[]`, which rules out pane substitutes only; set `subagent_fallback: false` to keep the earlier behavior.
+
 ## Layout
 
 ```
-.agents/plugins/    marketplace.json                (cross-tool; Codex reads this)
-.claude-plugin/     plugin.json + marketplace.json  (Claude Code)
-.codex-plugin/      plugin.json with interface block (Codex)
-.cursor-plugin/     plugin.json + marketplace.json  (Cursor)
-.opencode-plugin/   index.mjs                       (OpenCode 2)
-index.mjs                                          OpenCode 2 local-directory entrypoint
-package.json + package-lock.json                   OpenCode package and dependencies
-skills/<name>/SKILL.md              the skill itself
-skills/<name>/agents/openai.yaml    Codex interface metadata, per skill
+.agents/plugins/       marketplace.json                (cross-tool; Codex reads this)
+.antigravity-plugin/   plugin.json                     (Antigravity; loads skills/ by default)
+.claude-plugin/        plugin.json + marketplace.json  (Claude Code)
+.codex-plugin/         plugin.json with interface block (Codex)
+.cursor-plugin/        plugin.json + marketplace.json  (Cursor)
+.opencode-plugin/      index.mjs                       (OpenCode 2)
+index.mjs                                             OpenCode 2 local-directory entrypoint
+package.json + package-lock.json                      OpenCode package and dependencies
+skills/<name>/SKILL.md                 the skill itself, kept under 20,000 bytes
+skills/<name>/references/              detail a step reads when it needs it
+skills/<name>/agents/openai.yaml       Codex interface metadata, per skill
+skills/orchestration/profiles/         shipped composition profiles
 ```
 
 Codex resolves plugin manifests in the order `.codex-plugin/` → `.claude-plugin/` → `.cursor-plugin/`, and Cursor falls back from `.cursor-plugin/` to `.claude-plugin/`, so the manifests are kept in sync rather than deduplicated. Codex never reads `.codex-plugin/marketplace.json`, so the cross-tool `.agents/plugins/marketplace.json` is what makes it installable there.
@@ -89,11 +120,16 @@ The imported checks were verified in herdrpowers on 2026-10-09 against herdr 0.9
 
 ```bash
 bash tests/pane-model/run.sh
+bash tests/pane-model/effort.sh
+bash tests/pane-model/muse.sh
+bash tests/skill-size/test-skill-size.sh
 python3 -B -m unittest discover -s tests/composer-submit -v
 python3 -B -m unittest discover -s tests/herdr-guide -v
 npm ci
 npm test
 ```
+
+The [2026-11-19 sync record](docs/2026-11-19-orchestration-sync.md) lists what this release imported from herdrpowers, what it left out, and what it changed beyond it.
 
 The [2026-10-21 sync record](docs/2026-10-21-orchestration-sync.md) lists imported and excluded changes from herdrpowers, their sources, and validation.
 

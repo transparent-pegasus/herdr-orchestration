@@ -1,0 +1,30 @@
+orchestrator:
+  agy:
+    model: Gemini 4 Neon
+    effort: XHigh
+roles:
+  planning-design:
+    claude:
+      model: Fable 5.2
+      effort: max
+  decision-maker:
+    claude:
+      model: Fable 5.2
+      effort: max
+  coder: any
+  reviewers:
+    - codex:
+        model: GPT-6.2-Astra
+        effort: max
+    - agy:
+        model: Gemini 4 Neon
+        effort: XHigh
+  generalist:
+    agy:
+      effort: XHigh
+      model: Gemini 4 Hydrogen
+assignments:
+  plan-and-design:
+    mode: delegate
+  decision-making:
+    mode: delegate
