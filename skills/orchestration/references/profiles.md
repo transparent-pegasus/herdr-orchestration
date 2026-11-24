@@ -235,8 +235,8 @@ Send an explicit **orchestrator handoff**, containing:
 
 - The original user instruction, constraints, and current task state.
 - Absolute repository/worktree paths, selected profile name/path and its
-  `any` fills, frozen effective targets, assignments/gates, scope/strategy,
-  and lifecycle policy.
+  `any` fills, frozen effective targets, assignments/gates, pane scope,
+  subagent fallback, and lifecycle policy.
 - The primary and effective owner targets, any fallback key/substitute used,
   and lost constraints. Keep the profile file unchanged; owner aliases bind
   to the verified effective owner.
@@ -259,9 +259,9 @@ handoff/report, never in profile templates.
 ## Lifecycle is a separate permission
 
 The top-level boolean applies during owner handoff, normal routing, recovery,
-and fallback, with or without a profile. It governs Herdr agent processes;
-creation of the profile routing table's in-process task subagents is a
-separate routing operation and remains allowed when this boolean is false.
+and fallback, with or without a profile. It governs Herdr agent processes.
+In-process task subagents and fallback subagents remain available when this
+boolean is false.
 
 The value works at runtime, not only on paper: every start and end goes
 through `using-herdr-sibling-panes/scripts/agent-lifecycle.sh`, which reads
@@ -272,7 +272,7 @@ before the first lifecycle action; it holds the procedure, the exit codes, the
 observed start arguments and exit keys per CLI, and Claude's statusLine
 requirement.
 
-- **False:** reuse existing matching live agents only. Do not start, exit, or
+- **False:** for Herdr panes, reuse existing matching live agents only. Do not start, exit, or
   restart agents to satisfy routing, whether through the helper, Herdr, shell
   commands, composer keys, or recovery argv. Report required manual setup when
   existing candidates and allowed fallbacks cannot serve the task. Resetting a

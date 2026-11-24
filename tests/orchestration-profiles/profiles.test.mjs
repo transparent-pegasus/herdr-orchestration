@@ -31,9 +31,9 @@ test('every shipped profile orders owner, then roles from planning through decis
   }
 });
 
-test('fable and neon-fable give generalist work to Gemini 4 Hydrogen while solo keeps it with the owner', () => {
+test('fable and neon-fable give generalist work to Gemini 4 Hydrogen at an owner-chosen effort while solo keeps it with the owner', () => {
   for (const name of ['fable.yaml', 'neon-fable.yaml']) {
-    assert.match(read(profiles, name), /^  generalist:\n    agy:\n      effort: XHigh\n      model: Gemini 4 Hydrogen$/m, name);
+    assert.match(read(profiles, name), /^  generalist:\n    agy:\n      model: Gemini 4 Hydrogen\n      effort: any$/m, name);
   }
   assert.match(read(profiles, 'solo.yaml'), /^  generalist: orchestrator$/m);
 });
@@ -58,10 +58,11 @@ test('solo binds every role to the owner, and the contract allows it', () => {
   assert.match(contract(), /\| `roles.reviewers` \|[^\n]*`\[orchestrator\]`, `\[\]`, null, or literal `none` binds it to the active owner/);
 });
 
-// `any` is filled per run; in a list it would break slot independence.
+// Bare `any` slots are filled per run; in a list they would break slot independence.
 test('profiles write any only for the owner or a single-target role', () => {
   for (const name of names) {
     for (const [line] of read(profiles, name).matchAll(/^.*\bany\b.*$/gm)) {
+      if (/^ +effort: any$/.test(line)) continue;
       assert.match(line, /^(orchestrator|  (planning-design|decision-maker|coder|generalist)): any$/, `${name}: ${line}`);
     }
   }

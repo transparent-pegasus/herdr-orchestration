@@ -129,7 +129,9 @@ npm ci
 npm test
 ```
 
-The [2026-11-19 sync record](docs/2026-11-19-orchestration-sync.md) lists what this release imported from herdrpowers, what it left out, and what it changed beyond it.
+The [2026-11-24 sync record](docs/2026-11-24-orchestration-sync.md) covers owner-chosen effort for the generalist in the `fable` and `neon-fable` profiles.
+
+The [2026-11-19 sync record](docs/2026-11-19-orchestration-sync.md) lists what that release imported from herdrpowers, what it left out, and what it changed beyond it.
 
 The [2026-10-21 sync record](docs/2026-10-21-orchestration-sync.md) lists imported and excluded changes from herdrpowers, their sources, and validation.
 
